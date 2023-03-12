@@ -1,0 +1,707 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+{{ film.title }}
+{% endblock title %}
+{% block content %}
+    <style>
+    /* Popup form */
+.popup__overlay{
+	opacity: 0;
+    visibility: hidden;
+    width: 100%;
+	height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-transition: all 0.2s ease-in-out;
+    -moz--transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+}
+.popup__overlay.active{
+    opacity: 1;
+    visibility: visible;
+}
+.bg-modal{
+	transform: translateY(-100%);
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+	justify-content: center;
+    align-items: center;
+    transform: translateY(-100%);
+    -webkit-transition: all 0.4s ease-in-out;
+    -moz--transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out;
+}
+.popup__overlay.active .bg-modal{
+    transform: translateY(0);
+}
+.popup__container{
+    {#padding: 70px;#}
+    display: block;
+    {#max-width: 600px;#}
+    width: 100%;
+    /*background-color: #1e2427;*/
+}
+.popup__container-inner{
+    position: relative;
+    margin: 70px;
+	max-width: 417px;
+	margin: 0 auto;
+	text-align: center;
+}
+
+    </style>
+
+	<!-- details -->
+	<section class="section details">
+		<!-- details background -->
+		<div class="details__bg" data-bg="{% static 'img/home/home__bg.jpg' %}"></div>
+		<!-- end details background -->
+
+		<!-- details content -->
+		<div class="container">
+			<div class="row">
+				<!-- title -->
+				<div class="col-12">
+					<h1 class="details__title">{{ film.title }}</h1>
+				</div>
+				<!-- end title -->
+
+				<!-- content -->
+				<div class="col-12 col-xl-6">
+					<div class="card card--details">
+						<div class="row">
+							<!-- card cover -->
+							<div class="col-12 col-sm-4 col-md-4 col-lg-3 col-xl-5">
+								<div class="card__cover">
+									<img src="{{ film.poster.url }}" alt="poster">
+								</div>
+							</div>
+							<!-- end card cover -->
+
+							<!-- card content -->
+							<div class="col-12 col-sm-8 col-md-8 col-lg-9 col-xl-7">
+								<div class="card__content">
+									<div class="card__wrap">
+										<span class="card__rate"><i class="icon ion-ios-star"></i>{{ film.get_average_rating }}</span>
+
+										<ul class="card__list">
+                                            {% if user.is_authenticated %}
+                                                <li style="margin: 0; padding: 0;">
+                                                    <button id="selected_movie" value="{{ selected_flag }}" onclick="addSelectedMovie(event, {{ film.id }})" name="movie_add__remove" style="font-size: x-large; font-weight: bolder; padding: 3px;"><span class="iconify" data-icon="ant-design:video-camera-add-outlined" data-width="24"></span></button>
+                                                </li>
+                                            {% else %}
+                                                <li id="selected_movie" onclick="openPopup(this, 'notAuthToAd')" style="font-size: x-large; font-weight: bolder; padding: 3px; cursor: pointer">
+                                                    <span class="iconify" data-icon="ant-design:video-camera-add-outlined" data-width="24"></span>
+                                                </li>
+                                            {% endif %}
+										</ul>
+									</div>
+
+									<ul class="card__meta">
+										<li><span>Genre:</span>
+                                            {% for genre in genres %}
+                                                <a href="{% url 'films:films_catalog_genre' genre.id film.category.slug %}">{{ genre.title }}</a>
+                                            {% endfor %}
+                                        </li>
+										<li><span>Release year:</span>{{ film.release_year }}</li>
+										<li><span>Running time:</span>{{ film.running_time }} min</li>
+										<li><span>Country:</span>{{ film.country|upper }}</li>
+									</ul>
+
+									<div class="card__description card__description--details">
+                                        {{ film.plot }}
+									</div>
+								</div>
+							</div>
+							<!-- end card content -->
+						</div>
+					</div>
+				</div>
+				<!-- end content -->
+
+				<!-- player -->
+				<div class="col-12 col-xl-6">
+					<video controls playsinline poster="" id="player">
+						<!-- Video files -->
+						<source src="{{ film.video.url }}" type="video/mp4">
+					</video>
+				</div>
+				<!-- end player -->
+
+				<div class="col-12">
+					<div class="details__wrap">
+						<!-- availables -->
+						<div class="details__devices">
+							<span class="details__devices-title">Available on devices:</span>
+							<ul class="details__devices-list">
+								<li><i class="icon ion-logo-apple"></i><span>IOS</span></li>
+								<li><i class="icon ion-logo-android"></i><span>Android</span></li>
+								<li><i class="icon ion-logo-windows"></i><span>Windows</span></li>
+								<li><i class="icon ion-md-tv"></i><span>Smart TV</span></li>
+							</ul>
+						</div>
+						<!-- end available -->
+
+
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- end details content -->
+	</section>
+	<!-- end details -->
+
+	<!-- content -->
+	<section class="content">
+		<div class="content__head">
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<!-- content title -->
+						<h2 class="content__title">Discover</h2>
+						<!-- end content title -->
+
+						<!-- content tabs nav -->
+						<ul class="nav nav-tabs content__tabs" id="content__tabs" role="tablist">
+							<li class="nav-item">
+								<a class="nav-link active" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="true">Comments</a>
+							</li>
+
+							<li class="nav-item">
+								<a class="nav-link" data-toggle="tab" href="#tab-2" role="tab" aria-controls="tab-2" aria-selected="false">Reviews</a>
+							</li>
+
+							<li class="nav-item">
+								<a class="nav-link" data-toggle="tab" href="#tab-3" role="tab" aria-controls="tab-3" aria-selected="false">Photos</a>
+							</li>
+						</ul>
+						<!-- end content tabs nav -->
+
+						<!-- content mobile tabs nav -->
+						<div class="content__mobile-tabs" id="content__mobile-tabs">
+							<div class="content__mobile-tabs-btn dropdown-toggle" role="navigation" id="mobile-tabs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								<input type="button" value="Comments">
+								<span></span>
+							</div>
+
+							<div class="content__mobile-tabs-menu dropdown-menu" aria-labelledby="mobile-tabs">
+								<ul class="nav nav-tabs" role="tablist">
+									<li class="nav-item"><a class="nav-link active" id="1-tab" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="true">Comments</a></li>
+
+									<li class="nav-item"><a class="nav-link" id="2-tab" data-toggle="tab" href="#tab-2" role="tab" aria-controls="tab-2" aria-selected="false">Reviews</a></li>
+
+									<li class="nav-item"><a class="nav-link" id="3-tab" data-toggle="tab" href="#tab-3" role="tab" aria-controls="tab-3" aria-selected="false">Photos</a></li>
+								</ul>
+							</div>
+						</div>
+						<!-- end content mobile tabs nav -->
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-12 col-lg-8 col-xl-8">
+					<!-- content tabs -->
+					<div class="tab-content" id="myTabContent">
+						<div class="tab-pane fade show active" id="tab-1" role="tabpanel" aria-labelledby="1-tab">
+							<div class="row">
+								<!-- comments -->
+								<div class="col-12">
+									<div class="comments">
+										<ul class="comments__list">
+                                            {% for top_comment in film_comment %}
+                                                <li class="comments__item">
+                                                    <div class="comments__autor">
+                                                        {% if top_comment.author == 'guest' %}
+                                                            <img class="comments__avatar" src="{% static 'img/user.svg' %}" alt="">
+                                                        {% else %}
+    													    <img class="comments__avatar" src="{{ top_comment.user.profile.profile_img.url }}" alt="">
+                                                        {% endif %}
+                                                        <span class="comments__name">{{ top_comment.author }}</span>
+                                                        <span class="comments__time">{{ top_comment.posted_date }}</span>
+                                                    </div>
+                                                    <p class="comments__text">{{ top_comment.comment }}</p>
+                                                    <div class="comments__actions">
+
+                                                        <div class="comments__rate">
+                                                            {% if user.is_authenticated %}
+                                                                <button id="like_button{{ top_comment.id }}" onclick="likeDislikeButtonComment(event ,{{ top_comment.id }}, flag='like')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ top_comment.likes.count }}</span></button>
+                                                                <button id="dislike_button{{ top_comment.id }}" onclick="likeDislikeButtonComment(event ,{{ top_comment.id }}, flag='dislike')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ top_comment.dislikes.count }}</span></button>
+                                                            {% else %}
+                                                                <button id="like_button{{ top_comment.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ top_comment.likes.count }}</span></button>
+                                                                <button id="dislike_button{{ top_comment.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ top_comment.dislikes.count }}</span></button>
+                                                            {% endif %}
+
+													    </div>
+
+                                                        <a href="#comment_form" onclick="addParent('{{ top_comment.author }}','{{ top_comment.id }} ')"><button type="button">&nbsp;&nbsp;<i class="icon ion-ios-share-alt"></i>Reply</button></a>
+                                                        {% if user.is_authenticated and user == top_comment.user %}
+                                                            <a href="#comment_form" onclick="updateComment('{{ top_comment.id }}','{{ top_comment.comment|escapejs }}')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                        {% elif user.is_authenticated and user != top_comment.user %}
+                                                            <a onclick="openPopup(this, 'notUserReviewUpdate')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                        {% elif not user.is_authenticated %}
+                                                            <a onclick="openPopup(this, 'notAuthReviewUpdate')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                        {% endif %}
+
+                                                        {% if user.is_authenticated and user == top_comment.user %}
+                                                        <a href="{% url 'films:delete_comment' top_comment.id film.slug %}"><button type="button">&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete</button></a>
+                                                        {% elif user.is_authenticated and user != com.user %}
+                                                            <a onclick="openPopup(this, 'notUserReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                        {% elif not user.is_authenticated %}
+                                                            <a onclick="openPopup(this, 'notAuthReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                        {% endif %}
+                                                    </div>
+                                                </li>
+                                                    {% for com in top_comment.Parent.all %}
+                                                        <li class="comments__item comments__item--answer">
+                                                            <div class="comments__autor">
+                                                                {% if com.author == 'guest' %}
+                                                                    <img class="comments__avatar" src="{% static 'img/user.svg' %}" alt="">
+                                                                {% else %}
+                                                                    <img class="comments__avatar" src="{{ com.user.profile.profile_img.url }}" alt="">
+                                                                {% endif %}
+                                                                <span class="comments__name">{{ com.author }}</span>
+                                                                <span class="comments__time">{{ com.posted_date }}</span>
+                                                            </div>
+                                                            <p class="comments__text">{{ com.comment }}</p>
+                                                            <div class="comments__actions">
+                                                                <div class="comments__rate">
+                                                                    {% if user.is_authenticated %}
+                                                                        <button id="like_button{{ com.id }}" onclick="likeDislikeButtonComment(event ,{{ com.id }}, flag='like')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ com.likes.count }}</span></button>
+                                                                        <button id="dislike_button{{ com.id }}" onclick="likeDislikeButtonComment(event ,{{ com.id }}, flag='dislike')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ com.dislikes.count }}</span></button>
+                                                                    {% else %}
+                                                                        <button id="like_button{{ com.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ com.likes.count }}</span></button>
+                                                                        <button id="dislike_button{{ com.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ com.dislikes.count }}</span></button>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <a href="#comment_form" onclick="addParent('{{ com.author }}','{{ top_comment.id }} ')"><button type="button"><i class="icon ion-ios-share-alt"></i>Reply </button></a>
+                                                                {% if user.is_authenticated and user == com.user %}
+													                <a href="#comment_form" onclick="updateComment('{{ com.id }}','{{ com.comment|escapejs }}')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                                {% elif user.is_authenticated and user != com.user %}
+                                                                    <a onclick="openPopup(this, 'notUserReviewUpdate')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                                {% elif not user.is_authenticated %}
+                                                                    <a onclick="openPopup(this, 'notAuthReviewUpdate')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Update </button></a>
+                                                                {% endif %}
+
+                                                                {% if user.is_authenticated and user == com.user %}
+                                                                    <a href="{% url 'films:delete_comment' com.id film.slug %}"><button type="button">&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete</button></a>
+                                                                {% elif user.is_authenticated and user != com.user %}
+                                                                    <a onclick="openPopup(this, 'notUserReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                                {% elif not user.is_authenticated %}
+                                                                    <a onclick="openPopup(this, 'notAuthReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                                {% endif %}
+                                                            </div>
+                                                        </li>
+                                                     {% endfor %}
+                                            {% endfor %}
+										</ul>
+                                        <div id="comment_form" style="margin-bottom: 150px;"></div>
+
+										<form action="{% url 'films:add_review' film.slug %}" method="post" class="form" >
+                                            {% csrf_token %}
+											<textarea id="text" name="comment" class="form__textarea" placeholder="Add comment" required></textarea>
+                                            <input type="hidden" name="top_comment_up" id="top_comment_update" value="">
+                                            <input type="hidden" name="comment_update" id="comment_update" value="">
+											<button type="submit" name="comment_button" class="form__btn">Send</button>
+										</form>
+									</div>
+								</div>
+								<!-- end comments -->
+							</div>
+						</div>
+
+						<div class="tab-pane fade" id="tab-2" role="tabpanel" aria-labelledby="2-tab">
+							<div class="row">
+								<!-- reviews -->
+								<div class="col-12">
+									<div class="reviews">
+										<ul class="reviews__list">
+                                            {% for review in film_review %}
+                                                <li class="reviews__item">
+                                                    <div class="reviews__autor">
+                                                        {% if review.author == 'guest' %}
+                                                            <img class="reviews__avatar" src="{% static 'img/user.svg' %}" alt="">
+                                                        {% else %}
+                                                            <img class="reviews__avatar" src="{{ review.user.profile.profile_img.url }}" alt="">
+                                                        {% endif %}
+                                                        <span class="reviews__name">{{ review.title }}</span>
+                                                        <span class="reviews__time">{{ review.created }} by {{ review.author|title }}</span>
+
+                                                        <span class="reviews__rating"><i class="icon ion-ios-star"></i>{{ review.rating }}</span>
+                                                    </div>
+                                                    <p class="reviews__text">{{ review.review }}</p>
+                                                    <div class="comments__actions">
+													<div class="comments__rate">
+                                                            {% if user.is_authenticated %}
+                                                                <button id="like_button_review{{ review.id }}" onclick="likeDislikeButtonReview(event ,{{ review.id }}, flag='like')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ review.likes.count }}</span></button>
+                                                                <button id="dislike_button_review{{ review.id }}" onclick="likeDislikeButtonReview(event ,{{ review.id }}, flag='dislike')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ review.dislikes.count }}</span></button>
+                                                            {% else %}
+                                                                <button id="like_button_review{{ review.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-up"></i><span>{{ review.likes.count }}</span></button>
+                                                                <button id="like_button_review{{ review.id }}" onclick="openPopup(this, 'notAuthLikeUpdate')" type="button"><i class="icon ion-md-thumbs-down"></i><span>{{ review.dislikes.count }}</span></button>
+                                                            {% endif %}
+
+                                                    </div>
+                                                    {% if user.is_authenticated and user == review.user %}
+                                                        <a href="#formUpdate" onclick="updateReview('{{ review.id }}', '{{ review.title }}', '{{ review.review|escapejs }}', '{{ review.rating }}')"><button type="button"><i class="icon ion-ios-share-alt"></i>Update</button></a>
+                                                    {% elif user.is_authenticated and user != review.user %}
+                                                        <a onclick="openPopup(this, 'notUserReviewUpdate')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-share-alt"></i>Update </button></a>
+                                                    {% elif not user.is_authenticated %}
+                                                        <a onclick="openPopup(this, 'notAuthReviewUpdate')" class="popup__btn btn__register"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-share-alt"></i>Update </button></a>
+                                                    {% endif %}
+
+                                                    {% if user.is_authenticated and user == review.user %}
+                                                        <a href="{% url 'films:delete_review' review.id film.slug %}"><button type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete</button></a>
+                                                    {% elif user.is_authenticated and user != review.user %}
+                                                        <a onclick="openPopup(this, 'notUserReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                    {% elif not user.is_authenticated %}
+                                                        <a onclick="openPopup(this, 'notAuthReviewDelete')"><button name="update" type="button">&nbsp;&nbsp;&nbsp;<i class="icon ion-ios-quote"></i>Delete </button></a>
+                                                    {% endif %}
+												</div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div id="formUpdate" style="margin-bottom: 150px;"></div>
+										<form action="{% url 'films:add_review' film.slug %}" method="post" class="form" id="formUpdate">
+                                            {% csrf_token %}
+											<input id="title_review" type="text" class="form__input" placeholder="Title" name="title" required>
+											<textarea id="text_review" class="form__textarea" placeholder="Review" name="review" required></textarea>
+											<div class="form__slider">
+												<div class="form__slider-rating" id="slider__rating"></div>
+												<div class="form__slider-value" id="form__slider-value"></div>
+                                                <input type="hidden" id="slider_value_input"  name="rating">
+                                                <input type="hidden" id="review_update"  name="review_update">
+											</div>
+											<button type="submit" class="form__btn" name="review_button" onclick="submitFunction()">Send</button>
+										</form>
+									</div>
+								</div>
+								<!-- end reviews -->
+							</div>
+						</div>
+
+						<div class="tab-pane fade" id="tab-3" role="tabpanel" aria-labelledby="3-tab">
+							<!-- project gallery -->
+							<div class="gallery" itemscope>
+								<div class="row">
+									<!-- gallery item -->
+                                    {% for photo in film_stills %}
+									<figure class="col-12 col-sm-6 col-xl-4" itemprop="associatedMedia" itemscope>
+										<a href="{{ photo.stills.url }}" itemprop="contentUrl" data-size="1920x1280">
+											<img src="{{ photo.stills.url }}" itemprop="thumbnail" alt="Image description" />
+										</a>
+										<figcaption itemprop="caption description">Some image caption 1</figcaption>
+									</figure>
+                                    {% endfor %}
+									<!-- end gallery item -->
+								</div>
+							</div>
+							<!-- end project gallery -->
+						</div>
+					</div>
+					<!-- end content tabs -->
+				</div>
+
+				<!-- sidebar -->
+				<div class="col-12 col-lg-4 col-xl-4">
+					<div class="row">
+						<!-- section title -->
+						<div class="col-12">
+							<h2 class="section__title section__title--sidebar">You may also like...</h2>
+						</div>
+						<!-- end section title -->
+
+						<!-- card -->
+                        {% for film_may_like in films_may_like%}
+						<div class="col-6 col-sm-4 col-lg-6">
+							<div class="card">
+								<div class="card__cover">
+									<img src="{{ film_may_like.poster.url }}" alt="">
+									<a href="{{ film_may_like.get_absolute_url }}" class="card__play">
+										<i class="icon ion-ios-play"></i>
+									</a>
+								</div>
+								<div class="card__content">
+									<h3 class="card__title"><a href="#">{{ film_may_like.title }}</a></h3>
+									<span class="card__category">
+                                        {% for genre in film_may_like.genre.all %}
+										    <a href="{% url 'films:films_catalog_genre' genre.id film_may_like.category.slug %}">{{ genre.title }}</a>
+                                        {% endfor %}
+									</span>
+									<span class="card__rate"><i class="icon ion-ios-star"></i>
+                                        {{ film_may_like.get_average_rating }}
+                                    </span>
+								</div>
+							</div>
+						</div>
+                        {% endfor %}
+						<!-- end card -->
+					</div>
+				</div>
+				<!-- end sidebar -->
+			</div>
+		</div>
+	</section>
+	<!-- end content -->
+    <!-- popUP -->
+    <div class="register__popup popup__overlay">
+        <div class="popups bg-modal">
+            <div class="popup__container">
+                <div class="wrapper">
+                    <div class="popup__container-inner">
+
+                        <!--content-->
+                        <form action="" class="sign__form" method="post">
+                            {% csrf_token %}
+                                <span class="sign__text"><h1 id="text__to_update" class="page-">
+                                </h1></span>
+                                <p style="margin-bottom: 0px;" id="lover_text__to_update" class="page-404__text">
+                                </p>
+                                <div class="row">
+                                    <button type="button" name="comment_button" class="form__btn close__popup">Close</button>
+{#                                    <div class="col-xs-6"><a href="{{ film.get_absolute_url }}" class="page-404__btn">Close</a></div>#}
+{#                                    <div class="col-xs-6"><button class="page-404__btn" type="submit">&nbsp;Go Back&nbsp;</button></div>&nbsp&nbsp#}
+
+                                </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end popUP -->
+    	<!-- Root element of PhotoSwipe. Must have class pswp. -->
+	<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+		<!-- Background of PhotoSwipe.
+		It's a separate element, as animating opacity is faster than rgba(). -->
+		<div class="pswp__bg"></div>
+
+		<!-- Slides wrapper with overflow:hidden. -->
+		<div class="pswp__scroll-wrap">
+
+			<!-- Container that holds slides. PhotoSwipe keeps only 3 slides in DOM to save memory. -->
+			<!-- don't modify these 3 pswp__item elements, data is added later on. -->
+			<div class="pswp__container">
+				<div class="pswp__item"></div>
+				<div class="pswp__item"></div>
+				<div class="pswp__item"></div>
+			</div>
+
+			<!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+			<div class="pswp__ui pswp__ui--hidden">
+
+				<div class="pswp__top-bar">
+
+					<!--  Controls are self-explanatory. Order can be changed. -->
+
+					<div class="pswp__counter"></div>
+
+					<button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+					<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+					<!-- Preloader -->
+					<div class="pswp__preloader">
+						<div class="pswp__preloader__icn">
+							<div class="pswp__preloader__cut">
+								<div class="pswp__preloader__donut"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
+
+				<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
+
+				<div class="pswp__caption">
+					<div class="pswp__caption__center"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+    <script>
+        function addParent(author, id){
+            document.getElementById("top_comment_update").value = id;
+            document.getElementById("text").innerHTML = `${author}, `;
+          }
+
+        function updateComment(id, comment){
+            document.getElementById("comment_update").value = id;
+            document.getElementById("text").innerHTML = `${comment}`;
+        }
+
+        function submitFunction() {
+            let val = document.getElementById('form__slider-value').innerHTML;
+            document.getElementById('slider_value_input').setAttribute('value', val);
+          }
+
+        function updateReview(id, title, review, rating){
+            document.getElementById("review_update").value = id;
+            document.getElementById("title_review").value = `${title}`;
+            document.getElementById("text_review").innerHTML = `${review}`;
+            document.getElementById('form__slider-value').innerHTML = `${rating}`;
+        }
+
+        function likeDislikeButtonComment(event, id, like_flag){
+            event.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: '{% url "films:like_unlike_comment" %}',
+                data: {
+                    comment_id: id,
+                    flag: like_flag,
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    action: 'post'
+                },
+                success: function (json){
+                    document.getElementById('like_button' + id).children[1].innerHTML = json['json_like']
+                    document.getElementById('dislike_button' + id).children[1].innerHTML = json['json_dislike']
+                }
+            })
+        }
+
+        function likeDislikeButtonReview(event, id, like_flag){
+            event.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: '{% url "films:like_unlike_review" %}',
+                data: {
+                    review_id: id,
+                    flag: like_flag,
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    action: 'post'
+                },
+                success: function (json){
+                    document.getElementById('like_button_review' + id).children[1].innerHTML = json['json_like']
+                    document.getElementById('dislike_button_review' + id).children[1].innerHTML = json['json_dislike']
+                }
+            })
+        }
+
+        /*Popup*/
+        const popups = document.querySelectorAll(".popups");
+        const close_popup = document.querySelectorAll('.close__popup');
+
+        function openPopup(element, flag){
+
+            if(flag === "notAuthReviewUpdate"){
+                const popupWindow = document.querySelector('.register__popup');
+                document.querySelector('#text__to_update').innerText = "Please sign in to update!";
+                document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;' + '<p><span class="sign__text">If you don\'t, please <a href="{% url 'signup' %}">Sign up!</a></span></p>';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+            else if(flag === "notUserReviewUpdate"){
+                const popupWindow = document.querySelector('.register__popup');
+                        document.querySelector('#text__to_update').innerText = "Sorry sign in with correct account to update";
+                        document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+            else if(flag === "notUserReviewDelete"){
+                const popupWindow = document.querySelector('.register__popup');
+                        document.querySelector('#text__to_update').innerText = "Sorry sign in with correct account to delete";
+                        document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+            else if(flag === "notAuthReviewDelete"){
+                const popupWindow = document.querySelector('.register__popup');
+                        document.querySelector('#text__to_update').innerText = "Please sign in to delete";
+                        document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;' + '<p><span class="sign__text">If you don\'t, please <a href="{% url 'signup' %}">Sign up!</a></span></p>';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+            else if(flag === "notAuthLikeUpdate"){
+                const popupWindow = document.querySelector('.register__popup');
+                        document.querySelector('#text__to_update').innerText = "Please sign in to rate";
+                        document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;' + '<p><span class="sign__text">If you don\'t, please <a href="{% url 'signup' %}">Sign up!</a></span></p>';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+            else if(flag === "notAuthToAd"){
+                const popupWindow = document.querySelector('.register__popup');
+                        document.querySelector('#text__to_update').innerText = "Please sign in to add this movie";
+                        document.querySelector('#lover_text__to_update').innerHTML = '<span class="sign__text">Already have an account?&nbsp;<a href="{% url 'signin' %}">Sign in!</a></span>&nbsp;&nbsp;' + '<p><span class="sign__text">If you don\'t, please <a href="{% url 'signup' %}">Sign up!</a></span></p>';
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+            }
+        }
+
+        if(close_popup.length > 0){
+            for(let i = 0; i < close_popup.length; i++){
+                const close_pop = close_popup[i];
+                close_pop.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    closePopup();
+                });
+            }
+        }
+
+        function closePopup(popupWindow){
+            const popupOverlayAll = document.querySelectorAll('.popup__overlay');
+            if(popupOverlayAll.length > 0){
+                for(let i = 0; i < popupOverlayAll.length; i++){
+                    const popupOverlay = popupOverlayAll[i];
+                    popupOverlay.classList.remove('active');
+                }
+            }
+
+            if(popupWindow){
+                popupWindow.classList.add('active');
+                {#document.getElementsByTagName("body")[0].style.overflow = "hidden";#}
+            }
+        }
+
+        let selected = document.getElementById('selected_movie').value;
+        if (selected === 'add'){
+            document.getElementById('selected_movie').style.color = "#0cb457"
+        }else if (selected === "remove"){
+            document.getElementById('selected_movie').style.color = "#c1c1c2"
+        }
+
+        function addSelectedMovie(event, id){
+                event.preventDefault();
+                let selected = document.getElementById('selected_movie').value;
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url "films:selected_movie" %}',
+                    data: {
+                        movie_id: id,
+                        flag: selected,
+                        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                        action: 'post'
+                    },
+                    success: function (json){
+                        let selected = json['selected'];
+
+                        if (selected === 'add'){
+                            document.getElementById('selected_movie').style.color = "#0cb457"
+                            document.getElementById('selected_movie').value = selected;
+                        }else if (selected === "remove"){
+                            document.getElementById('selected_movie').style.color = "#c1c1c2"
+                            document.getElementById('selected_movie').value = selected;
+                        }
+                    }
+                })
+            }
+    </script>
+{% endblock content %}

@@ -1,0 +1,24 @@
+{% load static %}
+<div class="col-12">
+    {% if page_obj.has_other_pages %}
+        <ul class="paginator paginator--list">
+            {% if page_obj.has_previous %}
+                <li class="paginator__item paginator__item--prev">
+                    <a href="?page={{ page_obj.previous_page_number }}&selected_genre={{ selected_genre }}&ratings_start={{ ratings_start }}&ratings_end={{ ratings_end }}&years_start={{ years_start }}&years_end={{ years_end }}&selected={{ selected.id }}"><i class="icon ion-ios-arrow-back"></i></a>
+                </li>
+            {% endif %}
+            {% for k in page_obj.paginator.page_range %}
+                {% if page_obj.number == k %}
+                    <li class="paginator__item paginator__item--active"><a href="#">{{ k }}</a></li>
+                {% elif k > page_obj.number|add:'-2' and k < page_obj.number|add:'2' %}
+                    <li class="paginator__item"><a href="?page={{ k }}&selected_genre={{ selected_genre }}&ratings_start={{ ratings_start }}&ratings_end={{ ratings_end }}&years_start={{ years_start }}&years_end={{ years_end }}&selected={{ selected.id }}">{{ k }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="paginator__item paginator__item--next">
+                    <a href="?page={{ page_obj.next_page_number }}&selected_genre={{ selected_genre }}&ratings_start={{ ratings_start }}&ratings_end={{ ratings_end }}&years_start={{ years_start }}&years_end={{ years_end }}&selected={{ selected.id }}"><i class="icon ion-ios-arrow-forward"></i></a>
+                </li>
+            {% endif %}
+        </ul>
+    {% endif %}
+</div>

@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ request.user.username}}{% endblock title %}
+{% block content %}
+<style>
+    /* Popup form */
+.popup__overlay{
+	opacity: 0;
+    visibility: hidden;
+    width: 100%;
+	height: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-transition: all 0.2s ease-in-out;
+    -moz--transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+}
+.popup__overlay.active{
+    opacity: 1;
+    visibility: visible;
+}
+.bg-modal{
+	transform: translateY(-100%);
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+	justify-content: center;
+    align-items: center;
+    transform: translateY(-100%);
+    -webkit-transition: all 0.4s ease-in-out;
+    -moz--transition: all 0.4s ease-in-out;
+    transition: all 0.4s ease-in-out;
+}
+.popup__overlay.active .bg-modal{
+    transform: translateY(0);
+}
+.popup__container{
+    {#padding: 70px;#}
+    display: block;
+    {#max-width: 600px;#}
+    width: 100%;
+    /*background-color: #1e2427;*/
+}
+.popup__container-inner{
+    position: relative;
+    margin: 70px;
+	max-width: 417px;
+	margin: 0 auto;
+	text-align: center;
+}
+
+</style>
+{% if messages %}
+  {% for message in messages %}
+    {% if message.tags == 'error' %}
+    <div class="shadow-custom messages alert alert-danger text-center
+      col-lg-7 mx-auto">
+    {% else %}
+    <div class="shadow-custom messages alert alert-success text-center
+      col-lg-7 mx-auto">
+    {% endif %}
+      <h1>{{ message }}</h1>
+      <a href="" class="close">x</a>
+    </div>
+  {% endfor %}
+{% endif %}
+	<!-- page title -->
+	<section class="section section--first section--bg">
+		<div class="container">
+			<div class="row">
+				<div class="col-12">
+					<div class="section__wrap">
+						<!-- section title -->
+						<h2 class="section__title">Authors Films Flix Go</h2>
+						<!-- end section title -->
+
+						<!-- breadcrumb -->
+						<ul class="breadcrumb">
+							<li class="breadcrumb__item"><a href="{% url 'films:home' %}">Home</a></li>
+							<li class="breadcrumb__item breadcrumb__item--active">Profile</li>
+						</ul>
+						<!-- end breadcrumb -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- end page title -->
+
+	<!-- content -->
+	<div class="content">
+		<!-- profile -->
+		<div class="profile">
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<div class="profile__content">
+							<div class="profile__user">
+                                <span onclick="openPopup(this)" style="color: white; margin: 10px 10px 0px 10px; cursor: pointer;" class="iconify" data-icon="bx:upload" data-width="24"></span>
+								<div style="cursor: unset" class="profile__avatar">
+                                    {% if request.user.profile.profile_img %}
+                                        <img src="{{ request.user.profile.profile_img.url }}">
+                                    {% else %}
+                                        <img src="{% static 'img/user.svg' %}" alt="">
+                                    {% endif %}
+								</div>
+								<div class="profile__meta">
+									<h3>{{ request.user.username|title|truncatechars:11 }}</h3>
+									<span>FlixGo ID: {{ request.user.id }}</span>
+								</div>
+							</div>
+
+							<!-- content tabs nav -->
+							<ul class="nav nav-tabs content__tabs content__tabs--profile" id="content__tabs" role="tablist">
+                                <li class="nav-item">
+									<a class="nav-link active" data-toggle="tab" href="#tab-2" role="tab" aria-controls="tab-2" aria-selected="true">My Library</a>
+								</li>
+                                <li class="nav-item">
+									<a class="nav-link" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="false">Profile</a>
+								</li>
+							</ul>
+							<!-- end content tabs nav -->
+
+							<!-- content mobile tabs nav -->
+							<div class="content__mobile-tabs content__mobile-tabs--profile" id="content__mobile-tabs">
+								<div class="content__mobile-tabs-btn dropdown-toggle" role="navigation" id="mobile-tabs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<input type="button" value="Profile">
+									<span></span>
+								</div>
+
+								<div class="content__mobile-tabs-menu dropdown-menu" aria-labelledby="mobile-tabs">
+									<ul class="nav nav-tabs" role="tablist">
+										<li class="nav-item"><a class="nav-link active" id="1-tab" data-toggle="tab" href="#tab-1" role="tab" aria-controls="tab-1" aria-selected="true">Profile</a></li>
+                                        <li class="nav-item"><a class="nav-link" id="2-tab" data-toggle="tab" href="#tab-2" role="tab" aria-controls="tab-2" aria-selected="false">My Library</a></li>
+									</ul>
+								</div>
+							</div>
+							<!-- end content mobile tabs nav -->
+
+							<a href="{% url 'signout' %}" class="profile__logout">
+								<i class="icon ion-ios-log-out"></i>
+								<span>Logout</span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- end profile -->
+
+		<div class="container">
+			<!-- content tabs -->
+			<div class="tab-content" id="myTabContent">
+				<div class="tab-pane fade" id="tab-1" role="tabpanel" aria-labelledby="1-tab">
+					<div class="row">
+						<!-- details form -->
+						<div class="col-12 col-lg-6">
+							<form action="" method="post" class="profile__form">
+                                {% csrf_token %}
+								<div class="row">
+									<div class="col-12">
+										<h4 class="profile__title">Profile details</h4>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="first_name">First Name</label>
+											{{ user_data.first_name }}
+										</div>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="email">Email</label>
+											{{ user_data.email }}
+										</div>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="firstname">Last Name</label>
+											{{ profile_data.last_name }}
+										</div>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="lastname">Phone</label>
+											{{ profile_data.phone_number }}
+										</div>
+									</div>
+
+									<div class="col-12">
+										<button class="profile__btn" type="submit" name="save">Save</button>
+									</div>
+								</div>
+							</form>
+						</div>
+						<!-- end details form -->
+
+						<!-- password form -->
+						<div class="col-12 col-lg-6">
+							<form action="" method="post" class="profile__form">
+                                {% csrf_token %}
+								<div class="row">
+									<div class="col-12">
+										<h4 class="profile__title">Change password</h4>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="oldpass">Old Password</label>
+											{{ password_update.passwordOld }}
+										</div>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="newpass">New Password</label>
+											{{ password_update.passwordNew }}
+										</div>
+									</div>
+
+									<div class="col-12 col-md-6 col-lg-12 col-xl-6">
+										<div class="profile__group">
+											<label class="profile__label" for="confirmpass">Confirm New Password</label>
+											{{ password_update.passwordConf }}
+										</div>
+									</div>
+
+									<div class="col-12">
+										<button class="profile__btn" type="submit" name="change">Change</button>
+									</div>
+								</div>
+							</form>
+						</div>
+						<!-- end password form -->
+					</div>
+				</div>
+
+                <!-- profile movie content -->
+                <div class="tab-pane fade show active" id="tab-2" role="tabpanel" aria-labelledby="2-tab">
+                        <!-- catalog -->
+                        <div class="catalog">
+                                <div class="container">
+                                    <div class="row">
+                                        <!-- card -->
+                                        {% if page_obj %}
+                                            {% for movie in page_obj %}
+                                                <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                                                    <div class="card">
+                                                        <div class="card__cover">
+                                                            <img src="{{ movie.poster.url  }}" alt="">
+                                                            <a href="{{ movie.get_absolute_url }}" class="card__play">
+                                                                <i class="icon ion-ios-play"></i>
+                                                            </a>
+                                                        </div>
+                                                        <div class="card__content">
+                                                            <h3 class="card__title"><a href="#">{{ movie.title }}</a></h3>
+                                                            <span class="card__category">
+                                                                {% for genre in movie.genre.all %}
+                                                                    <a href="{% url 'films:films_catalog_genre' genre.id movie.category.slug %}">{{ genre.title }}</a>
+                                                                {% endfor %}
+                                                            </span>
+                                                            <span class="card__rate"><i class="icon ion-ios-star"></i>{{ movie.get_average_rating }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    <!-- end card -->
+                                            {% endfor %}
+                                        {% elif result_actors %}
+                                            {% for actor in result_actors %}
+                                                <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                                                    <div class="card">
+                                                        <div class="card__cover">
+                                                            <img src="{{ actor.photo.url }}" alt="">
+                                                            <a href="#" class="card__play">
+                                                                <i class="icon ion-ios-play"></i>
+                                                            </a>
+                                                        </div>
+                                                        <div class="card__content">
+                                                            <h3 class="card__title"><a href="#">{{ actor.name }}</a></h3>
+                                                            <span class="card__category">
+                                                                <a href="#">Action</a>
+                                                                <a href="#">Triler</a>
+                                                            </span>
+                                                            <span class="card__rate"><i class="icon ion-ios-star"></i>8.4</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                    <!-- end card -->
+                                            {% endfor %}
+                                        {% else %}
+                                            <h2>{{ message }}</h2>
+                                        {% endif %}
+                                        <!-- end card -->
+
+                                        <!-- paginator -->
+                                        {% include 'include/pagination_result.html' %}
+                                        <!-- end paginator -->
+                                    </div>
+                                </div>
+                            </div>
+                        <!-- end catalog -->
+				</div>
+			</div>
+			<!-- end content tabs -->
+		</div>
+	</div>
+	<!-- end content -->
+
+        <!-- popUP -->
+    <div class="profile__popup popup__overlay">
+        <div onclick="closePopup(this)" class="popups bg-modal">
+            <div class="popup__container">
+                <div class="wrapper">
+                    <div class="popup__container-inner">
+                        <a style="position: absolute; left: 437px;" href="#" class="close__popup">
+                                <svg class="close__popup-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewBox="0 0 25 25">
+                                    <image width="25" height="25" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAtCAYAAAA6GuKaAAADkklEQVRYhc2W204UQRCGf4wvYb+AD+CNkbMYjYmi6yoa46VBUQRPMUqEFUGNMZ5AiD6Ah4iAYGK8UAREn0Tq0jtjvNKUqY6VSi87Mz078F9t9fROf1P9d1U3rK6ujgA4CWAMwB0ULOdcogWJqBvAMIBphv6jno0CGCwSOwk0EfUBeOzjTQCuqufXAVTqBZhFRHRGAwO4x9B3AdxUgzdkGzYC8DkAE2po0jl3ZZMEFQM+ZOLCRUS9cs408FmIPbwYfEDFg5L19QIeV0MPPDAMNKR6jKjY7kDdRUT9BpgzfEmva6Eh1hhScWEZJyLO5iM1NKYz7BWChmRbV5FKvauKAD9RQ+POuf7Q3GrQEFvYqlIXqxDRRQPMluirNp+bS613DgfsMhpN+l+nADxV8WTIElprZdqrYur2iDmsMeozwBO1gJEQGmINnW3unLcjgS+YTseHrjfJH5NCI5DhaxH3lB6uvSoeq3boQkoDDcm2tgofzFsp33GefaviyTTAyACNgFUGUlQV3v6HKg7W4VrKAg2xiW44gwnquG3NfK9IlWGvrNAQm2hr2B3Q6jHAz7ICIxIaUkX0YRwOtHzefu1hrhinYxaNhYY0Gg1aURnvtq1ZDmKUNucADclwg/I1x9sAdKo5E9JMopVHpr0425cB/JTYA/8W7ydqHEmUJzTrPoDvZuyHeD835Q39EsBWM7YFwIeNCj0D4JiK2de/5PceAEt5LZQX9FsAJRWXxOO71VgLgOU8FssDegrAARWX5SNYKwBa1bNmAAux68ZCzwE4rOKS2ESLs9uk4nYAX2IWjYGeNXW4pDJs9dVkfEeMx7NCvwFwUMXlNYC9OONtKm4Rq6RWFuhZgfQ6GrBENXF2O9SzdiJKfTjTQs+ZDPPv1ynfsSAH0quZiD6neUEa6Gnj4S75iCxaMRlvSwOeFJq3/5ABnsoI7LUQAE9klSTQtnF05gDsxeCNKmar1CyHtaDnAo3jXRSmkXPuG4BdarSpFvha0NbD5RRVIpWcc59MOWTwxbTQU8bDdQP2cs4tmQbUSkTBOh6Cnjetue7AXs65ZWnzXlzHV+w8C/0KwH4VFwbs5ZxbNFZpJKKPeo6GnpHu5nWkaGAvsYoG79Dl0EPPm7JWlvvFuikA3uytwtDPjSVC18t1kYC3qLXZKu8Z+rga7EpwWytUzjmu2TvVmnsZeh+AFxzk2OlylXOO7yXb/7kCOPEX9C34YP9Ybl0AAAAASUVORK5CYII="></image>
+                                </svg>
+                            </a>
+                        <!--content-->
+                        <div onclick="event.stopPropagation()">
+                            <form action="" class="sign__form" method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                    <span class="sign__text">
+                                        <h1 id="text__to_update" class="page-">Load New Image</h1>
+                                    </span>
+                                    <p style="margin-bottom: 0px;" id="lover_text__to_update" class="page-404__text">
+                                        It would be easier to recognise you from other users if you load an img. You could load
+                                        in next formats: JPG, GIF or PNG
+                                    </p>
+                                    <label for="file_upload" class="form__btn" style="cursor: pointer; background-image: linear-gradient(90deg, #d9b4c6 0%, #65933c 100%);">
+                                        Select and img
+                                    </label>
+{#                                    <input  name="profile_img_again" value="5" type="hidden" />#}
+                                    <input id="file_upload" name="profile_img" type="file" style="display: none;">
+                                    <div class="row">
+                                        <button type="submit" class="form__btn">Upload</button>
+                                    </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end popUP -->
+
+    <script src="https://code.iconify.design/2/2.1.0/iconify.min.js"></script>
+    <script>
+        const popups = document.querySelectorAll(".popups");
+        const close_popup = document.querySelectorAll('.close__popup');
+
+        function openPopup(element){
+                const popupWindow = document.querySelector('.profile__popup');
+                if(popupWindow){
+                    closePopup(popupWindow);
+                }
+        }
+
+        if(close_popup.length > 0){
+            for(let i = 0; i < close_popup.length; i++){
+                const close_pop = close_popup[i];
+                close_pop.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    closePopup();
+                });
+            }
+        }
+
+        function closePopup(popupWindow){
+            const popupOverlayAll = document.querySelectorAll('.popup__overlay');
+            if(popupOverlayAll.length > 0){
+                for(let i = 0; i < popupOverlayAll.length; i++){
+                    const popupOverlay = popupOverlayAll[i];
+                    popupOverlay.classList.remove('active');
+                }
+            }
+
+            if(popupWindow){
+                popupWindow.classList.add('active');
+                {#document.getElementsByTagName("body")[0].style.overflow = "hidden";#}
+            }
+        }
+    </script>
+	<!-- footer -->
+{% endblock content %}

@@ -1,0 +1,38 @@
+{% load static %}
+<section class="section section--bg" data-bg="{% static 'img/section/section.jpg' %}">
+		<div class="container">
+			<div class="row">
+				<!-- section title -->
+				<div class="col-12">
+					<h2 class="section__title">Expected premiere</h2>
+				</div>
+				<!-- end section title -->
+
+				<!-- card -->
+                {% for n_available in unavailable %}
+                    <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+                        <div class="card">
+                            <div class="card__cover">
+                                <img src="{{ n_available.poster.url }}" alt="">
+{#                                <a href="{{ n_available.get_absolute_url }}" class="card__play">#}
+{#                                    <i class="icon ion-ios-play"></i>#}
+{#                                </a>#}
+                            </div>
+                            <div class="card__content">
+                                <h3 class="card__title">
+                                    {{ n_available.title }}
+                                </h3>
+                                <span class="card__category">
+                                    {% for genre in n_available.genre.all %}
+                                        <a href="{% url 'films:films_catalog_genre' genre.id n_available.category.slug %}">{{ genre.title }}</a>
+                                    {% endfor %}
+                                </span>
+                                <span class="card__rate"><i class="icon ion-ios-star"></i>{{ n_available.get_average_rating }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+				<!-- end card -->
+			</div>
+		</div>
+	</section>

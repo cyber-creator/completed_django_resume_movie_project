@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+AFFG Catalog
+{% endblock title %}
+{% block content %}
+	<!-- page title -->
+	<section class="section section--first section--bg" data-bg="{% static 'img/section/section.jpg' %}">
+		<div class="container">
+			<div class="row">
+				<div class="col-12">
+					<div class="section__wrap">
+						<!-- section title -->
+						<h2 class="section__title">
+                            {% if selected_genre.title %}
+                                Genre: {{ selected_genre.title|title }}
+                            {% else %}
+                                Category: {{ selected.title|title  }}
+                            {% endif %}
+                        </h2>
+						<!-- end section title -->
+
+						<!-- breadcrumb -->
+						<ul class="breadcrumb">
+							<li class="breadcrumb__item"><a href="{% url 'films:home' %}">Home</a></li>
+							<li class="breadcrumb__item breadcrumb__item--active">{{ selected.title }}</li>
+						</ul>
+						<!-- end breadcrumb -->
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- end page title -->
+
+	<!-- filter -->
+    <form action="{% url 'films:filter_films' %}" method="get">
+        {% csrf_token %}
+        <div class="filter">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="filter__content">
+                            <div class="filter__items">
+                                <!-- filter item -->
+                                <div class="filter__item" id="filter__genre">
+                                    <span class="filter__item-label">GENRE:</span>
+
+                                    <div class="filter__item-btn dropdown-toggle" role="navigation" id="filter-genre" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        {% if selected_genre %}
+                                            <input id="get_genre" type="button" value="{{ selected_genre.title }}">
+                                        {% else %}
+                                            <input id="get_genre" type="button" value="{{ genres.first.title }}">
+                                        {% endif %}
+                                        <input id="pass_genre" type="hidden" name="selected_genre">
+                                        <span></span>
+                                    </div>
+
+                                    <ul class="filter__item-menu dropdown-menu scrollbar-dropdown" aria-labelledby="filter-genre">
+                                        {% for genre in genres %}
+                                            <li>{{ genre }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <!-- end filter item -->
+
+                                <!-- filter item -->
+                                <div class="filter__item" id="filter__rate">
+                                    <span class="filter__item-label">Rating:</span>
+
+                                    <div class="filter__item-btn dropdown-toggle" role="button" id="filter-rate" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <div class="filter__range">
+                                            <div id="filter__imbd-start"></div>
+                                            <div id="filter__imbd-end"></div>
+                                        </div>
+                                        <input id="pass_start" type="hidden" name="ratings_start" value="0.0">
+                                        <input id="pass_end" type="hidden" name="ratings_end" value="10.0">
+                                        <span></span>
+                                    </div>
+
+                                    <div class="filter__item-menu filter__item-menu--range dropdown-menu" aria-labelledby="filter-rate">
+                                        <div id="filter__imbd"></div>
+                                    </div>
+                                </div>
+                                <!-- end filter item -->
+
+                                <!-- filter item -->
+                                <div class="filter__item" id="filter__year">
+                                    <span class="filter__item-label">RELEASE YEAR:</span>
+
+                                    <div class="filter__item-btn dropdown-toggle" role="button" id="filter-year" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <div class="filter__range">
+                                            <div id="filter__years-start"></div>
+                                            <div id="filter__years-end"></div>
+                                        </div>
+                                        <input id="start_years" type="hidden" name="years_start">
+                                        <input id="end_years" type="hidden" name="years_end">
+                                        <span></span>
+                                    </div>
+
+                                    <div class="filter__item-menu filter__item-menu--range dropdown-menu" aria-labelledby="filter-year">
+                                        <div id="filter__years"></div>
+                                    </div>
+                                </div>
+                                <!-- end filter item -->
+                            </div>
+
+                            <input type="hidden" name="selected" value="{{ selected.id }}">
+                            <!-- filter btn -->
+                            <button onclick="addValues()" class="filter__btn" type="submit">apply filter</button>
+                            <!-- end filter btn -->
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+	<!-- end filter -->
+
+	<!-- catalog -->
+	<div class="catalog">
+		<div class="container">
+			<div class="row">
+				<!-- card -->
+                {% if not page_obj %}
+                        <h1>Sorry no result were find</h1>
+                {% endif %}
+                {% for film in page_obj  %}
+				    <div class="col-6 col-sm-12 col-lg-6">
+					<div class="card card--list">
+						<div class="row">
+							<div class="col-12 col-sm-4">
+								<div class="card__cover">
+									<img src="{{ film.poster.url }}" alt="">
+									<a href="{{ film.get_absolute_url }}" class="card__play">
+										<i class="icon ion-ios-play"></i>
+									</a>
+								</div>
+							</div>
+
+							<div class="col-12 col-sm-8">
+								<div class="card__content">
+									<h3 class="card__title"><a href="{{ film.get_absolute_url }}">{{ film.title }}</a></h3>
+									<span class="card__category">
+										{% for genre in film.genre.all %}
+                                            <a href="{% url 'films:films_catalog_genre' genre.id selected.slug %}">{{ genre.title }}</a>
+                                        {% endfor %}
+									</span>
+
+									<div class="card__wrap">
+										<span class="card__rate"><i class="icon ion-ios-star"></i>{{ film.get_average_rating }}</span>
+
+										<ul class="card__list">
+											<li>HD</li>
+										</ul>
+									</div>
+
+									<div class="card__description">
+										<p>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+                {% endfor %}
+				<!-- end card -->
+
+				<!-- paginator -->
+                {% include 'include/pagination.html' %}
+				<!-- end paginator -->
+			</div>
+		</div>
+	</div>
+	<!-- end catalog -->
+
+	<!-- expected premiere -->
+	{% include 'include/expected_premiere.html' %}
+	<!-- end expected premiere -->
+
+    <script>
+        let StartYearSearch = {{ year_min|escapejs }};
+        let EndYearSearch = {{ year_max|escapejs }};
+
+        function addValues(){
+            let getGenre = document.getElementById('get_genre').value;
+            document.getElementById('pass_genre').value = getGenre;
+
+            let getStart = document.getElementById('filter__imbd-start').innerText;
+            document.getElementById('pass_start').value = getStart;
+
+            let getEnd = document.getElementById('filter__imbd-end').innerText;
+            document.getElementById('pass_end').value = getEnd;
+
+            let startYear = document.getElementById('filter__years-start').innerText;
+            document.getElementById('start_years').value = startYear;
+
+            let endYear = document.getElementById('filter__years-end').innerText;
+            document.getElementById('end_years').value = endYear;
+        }
+    </script>
+{% endblock content %}
